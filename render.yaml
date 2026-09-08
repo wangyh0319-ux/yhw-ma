@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: ai-music-analyzer
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: FRONTEND_ORIGINS
+        value: "*"
