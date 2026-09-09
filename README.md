@@ -1,68 +1,77 @@
 # AI Music Analyzer
 
-分析音频的 BPM、调性、响度等指标，并用 AI 判断风格与情绪。
+Short-drama music toolkit: measure a track, score a mix, and find library cues from a scene description.
 
-当前进度：**模块 7 — 分析报告**（完整报告页：摘要、指标、AI、频谱，以及加载/错误状态）。
+Upload **MP3** or **WAV** (up to 50 MB). The UI is English; scene search understands Chinese descriptions.
 
-## 你需要同时开两个窗口
+This repository is the source code. Clone it and run locally to try the app. Audio files in a private library are not included.
 
-这个项目有两部分：
+## What it does
 
-1. **后端**（Python）：算音频、提供接口，地址 `http://127.0.0.1:8000`
-2. **前端**（网页）：你看到的界面，地址 `http://localhost:5173`
+Three modules in one web app:
 
-## 第一次安装
+| Module | For | What you get |
+| --- | --- | --- |
+| **Analyzer** | “What is this track?” | Duration, BPM, key, LUFS, RMS, spectrum, optional AI genre/mood/energy |
+| **Mixing Assistant** | “How is this bounce?” | Mix Health 0–100, loudness / frequency / dynamics / stereo / clipping, issue list, optional AI notes from those numbers only |
+| **Library** | Short-drama music cues | Batch upload, mood/style/scene tags, filters, **Find Music** from a written scene |
 
-在终端里进入项目文件夹：
+Scene search example: *女主发现男友出轨后，一个人在雨夜回家.*  
+The app maps that to mood / scene / relationship / drama tags, scores the library, and explains why each cue was suggested. It works **without** a paid OpenAI key (keyword rules). If a key is present and the API succeeds, parsing can be more precise.
 
-```bash
-cd ~/ai-music-analyzer
-```
+Mixing DSP stays separate from Analyzer: stereo load, 7-band mix spectrum, scores first; AI only comments on those scores.
 
-### 后端
+## Stack
+
+- **Frontend:** React + Vite  
+- **Backend:** FastAPI (Python 3.9+ locally; Docker uses 3.11)  
+- **Audio:** librosa, pyloudnorm, ffmpeg (MP3)  
+- **Library:** SQLite  
+- **Optional AI:** OpenAI-compatible chat API (`gpt-4o-mini` by default)
+
+## Run locally
+
+You need **two terminals**. MP3 analysis requires **ffmpeg** on the machine (`brew install ffmpeg` on macOS). WAV works without it.
+
+### Backend
 
 ```bash
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-### 前端
+Health check: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+
+### Frontend
 
 ```bash
 cd frontend
 npm install
+npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
-## 每次开发时怎么运行
+Open [http://127.0.0.1:5173](http://127.0.0.1:5173). Use this address (not port 8000) while developing so you get the live UI.
 
-**窗口 1 — 后端：**
+### Optional OpenAI
 
-```bash
-cd ~/ai-music-analyzer/backend
-source .venv/bin/activate
-uvicorn app.main:app --reload --port 8000
-```
+Copy `backend/.env.example` to `backend/.env` and set `OPENAI_API_KEY`. Without a key, measurements, mix scores, tagging rules, and scene search still run; Analyzer/Mixing AI text and richer drama tags are skipped.
 
-浏览器打开：http://127.0.0.1:8000/health  
-应该看到：`{"ok":true,"service":"ai-music-analyzer"}`
+Do not commit `.env`.
 
-分析接口：网页上选文件后点 Analyze，会调用 `POST /api/analyze/run`。
+## Deploy
 
-MP3 需要本机安装 `ffmpeg`；WAV 可以直接分析。
+A `Dockerfile` builds the frontend and serves it from FastAPI (one URL). Railway-style hosts should generate a public domain after a successful deploy. Public hobby instances may time out on long files; the image caps analysis to **22.05 kHz / 90 seconds** to reduce memory use.
 
-### 可选：打开 AI 标签
+## Limits
 
-复制 `backend/.env.example` 为 `backend/.env`，填入你的 OpenAI API 密钥，然后重启后端。
+- Formats: `.mp3`, `.wav`  
+- Upload size: 50 MB  
+- Library audio and the SQLite DB are gitignored (`backend/library/`)  
+- Temporary Analyzer/Mixing uploads are deleted after the run; library files are kept on the server disk  
 
-没有密钥时，客观数字仍然会出来，只是没有 Genre / Mood / Energy。
+## License
 
-**窗口 2 — 前端：**
-
-```bash
-cd ~/ai-music-analyzer/frontend
-npm run dev
-```
-
-浏览器打开终端里提示的地址（一般是 http://localhost:5173 ）。
+Private project shared as a portfolio. Ask before reusing it in a product.
