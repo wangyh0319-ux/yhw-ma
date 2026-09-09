@@ -11,3 +11,4 @@ backend/uploads/
 backend/library/*.sqlite
 backend/library/audio/
 *.log
+.numba_cache/

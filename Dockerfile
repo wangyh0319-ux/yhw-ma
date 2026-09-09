@@ -20,5 +20,7 @@ COPY --from=frontend /frontend/dist /app/frontend/dist
 WORKDIR /app/backend
 ENV PYTHONUNBUFFERED=1
 ENV FRONTEND_ORIGINS=*
+ENV AUDIO_SR=22050
+ENV AUDIO_DURATION_SEC=90
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 75"]

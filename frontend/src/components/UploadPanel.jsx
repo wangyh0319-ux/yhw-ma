@@ -40,7 +40,9 @@ function UploadPanel({ backendOnline }) {
       <aside className="inspector">
         <p className="kicker">INPUT</p>
         <h1>Session</h1>
-        <p className="note">MP3 or WAV, up to 50 MB. WAV works now; MP3 needs ffmpeg.</p>
+        <p className="note">
+          MP3 or WAV, up to 50 MB. WAV works as-is; MP3 needs ffmpeg. On the public website, use a song under 3 minutes / 15 MB so the server does not time out.
+        </p>
 
         <label className="file-field">
           <input

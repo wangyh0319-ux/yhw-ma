@@ -47,6 +47,10 @@ if _FRONTEND_READY:
 
     @app.get("/{full_path:path}")
     def serve_frontend_file(full_path: str):
+        if full_path == "health" or full_path.startswith("api/"):
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=404, detail="Not found.")
         target = _safe_frontend_file(full_path)
         if target is not None:
             return FileResponse(target)

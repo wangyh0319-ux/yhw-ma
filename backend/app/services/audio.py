@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 import librosa
 import numpy as np
@@ -83,7 +84,13 @@ def spectrum_features(y: np.ndarray, sr: int, bin_count: int = 64) -> dict:
 
 def analyze_audio(path: Path) -> dict:
     try:
-        y, sr = librosa.load(path, sr=None, mono=True)
+        target_sr = os.getenv("AUDIO_SR", "").strip()
+        sr_arg = int(target_sr) if target_sr else None
+        duration_cap = os.getenv("AUDIO_DURATION_SEC", "").strip()
+        duration_arg = float(duration_cap) if duration_cap else None
+        y, sr = librosa.load(
+            path, sr=sr_arg, mono=True, duration=duration_arg
+        )
     except Exception as exc:
         raise RuntimeError(
             "Could not read this audio file. WAV works as-is; MP3 needs ffmpeg."

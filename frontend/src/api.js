@@ -7,6 +7,28 @@ function errorMessage(payload, fallback) {
   return fallback
 }
 
+async function readJson(response, fallback) {
+  const text = await response.text()
+  let payload = null
+  try {
+    payload = text ? JSON.parse(text) : null
+  } catch {
+    if (response.status === 413) {
+      throw new Error('File is too large for the server. Try a file under 15 MB.')
+    }
+    if (response.status === 502 || response.status === 504 || response.status === 408) {
+      throw new Error(
+        'Analysis timed out on the server. Try a shorter song (under 3 minutes, under 15 MB).',
+      )
+    }
+    throw new Error(fallback)
+  }
+  if (!response.ok) {
+    throw new Error(errorMessage(payload, fallback))
+  }
+  return payload
+}
+
 export async function checkHealth() {
   const response = await fetch(`${API}/health`)
   if (!response.ok) {
@@ -23,11 +45,7 @@ export async function analyzeAudio(file) {
     method: 'POST',
     body,
   })
-  const payload = await response.json()
-  if (!response.ok) {
-    throw new Error(errorMessage(payload, 'Analysis failed'))
-  }
-  return payload
+  return readJson(response, 'Analysis failed')
 }
 
 export async function mixAudio(file) {
@@ -38,11 +56,7 @@ export async function mixAudio(file) {
     method: 'POST',
     body,
   })
-  const payload = await response.json()
-  if (!response.ok) {
-    throw new Error(errorMessage(payload, 'Mixing analysis failed'))
-  }
-  return payload
+  return readJson(response, 'Mixing analysis failed')
 }
 
 export async function listLibraryTaxonomy() {
@@ -95,6 +109,15 @@ export async function uploadLibraryTrack(file, title, artist) {
 
 export function libraryAudioUrl(trackId) {
   return `${API}/api/library/tracks/${trackId}/audio`
+}
+
+export async function searchLibraryScene(text) {
+  const response = await fetch(`${API}/api/library/search/scene`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  })
+  return readJson(response, 'Scene search failed')
 }
 
 export async function tagLibraryTrack(trackId) {

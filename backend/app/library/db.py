@@ -127,6 +127,19 @@ def list_tracks(moods=None, styles=None) -> list:
     return tracks
 
 
+def list_tracks_for_match() -> list:
+    with _connect() as connection:
+        rows = connection.execute(
+            """
+            SELECT id, title, artist, audio_path, duration_sec, bpm, key, genre,
+                   energy, tempo_feel, tension, intensity, mix_overall, lufs, analyzer_json
+            FROM tracks
+            ORDER BY created_at DESC
+            """
+        ).fetchall()
+    return [with_tags(dict(row)) for row in rows]
+
+
 def get_track(track_id: str):
     with _connect() as connection:
         row = connection.execute(

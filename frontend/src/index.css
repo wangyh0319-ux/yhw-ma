@@ -515,6 +515,58 @@ h1 {
   margin-bottom: 28px;
 }
 
+.scene-search {
+  margin-bottom: 32px;
+}
+
+.scene-form textarea {
+  display: block;
+  width: 100%;
+  font: inherit;
+  padding: 12px;
+  border: 1px solid #2a2d34;
+  background: #14161b;
+  color: #f2f3f5;
+  resize: vertical;
+}
+
+.scene-form .action {
+  margin-top: 12px;
+}
+
+.match-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.match-card {
+  padding: 16px;
+  border: 1px solid #2a2d34;
+  background: #14161b;
+}
+
+.match-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.match-score {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  color: #b8f0cc;
+}
+
+.why-track {
+  margin: 12px 0 8px;
+  color: #c8ccd4;
+  line-height: 1.5;
+}
+
 .filter-label {
   margin: 14px 0 8px;
   font-size: 11px;

@@ -37,7 +37,10 @@ FRONTEND_DIST = Path(
     os.getenv("FRONTEND_DIST", str(PROJECT_ROOT / "frontend" / "dist"))
 )
 
-UPLOAD_DIR = BACKEND_DIR / "uploads"
+_ON_RAILWAY = bool(
+    os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_ENVIRONMENT_NAME")
+)
+UPLOAD_DIR = Path("/tmp/uploads") if _ON_RAILWAY else (BACKEND_DIR / "uploads")
 LIBRARY_DIR = BACKEND_DIR / "library"
 LIBRARY_DB = LIBRARY_DIR / "library.sqlite"
 LIBRARY_AUDIO_DIR = LIBRARY_DIR / "audio"

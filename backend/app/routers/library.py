@@ -16,6 +16,9 @@ from app.library.db import (
     update_audio,
 )
 from app.library.pipeline import tag_all_library_tracks, tag_library_track
+from app.library.parse_scene import SceneParseError, parse_scene_text
+from app.library.search import search_scene
+from app.library.scene_query import sanitize_scene_query, scene_query_schema
 from app.library.storage import save_library_audio
 from app.library.taxonomy import taxonomy_payload
 
@@ -28,9 +31,39 @@ class TrackCreate(BaseModel):
     artist: str = ""
 
 
+class SceneParseBody(BaseModel):
+    text: str = ""
+
+
 @router.get("/taxonomy")
 def library_taxonomy():
     return taxonomy_payload()
+
+
+@router.get("/scene-query/schema")
+def library_scene_query_schema():
+    return scene_query_schema()
+
+
+@router.post("/scene-query/clean")
+def library_scene_query_clean(payload: dict):
+    return sanitize_scene_query(payload)
+
+
+@router.post("/scene-query/parse")
+def library_scene_query_parse(payload: SceneParseBody):
+    try:
+        return parse_scene_text(payload.text)
+    except SceneParseError as extra:
+        raise HTTPException(status_code=400, detail=str(extra)) from extra
+
+
+@router.post("/search/scene")
+def library_search_scene(payload: SceneParseBody):
+    try:
+        return search_scene(payload.text)
+    except SceneParseError as extra:
+        raise HTTPException(status_code=400, detail=str(extra)) from extra
 
 
 @router.get("/tracks")

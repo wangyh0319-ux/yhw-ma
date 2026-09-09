@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import SceneSearch from './SceneSearch'
 import {
   createLibraryTrack,
   deleteLibraryTrack,
@@ -38,15 +39,51 @@ function trackStyles(track) {
   return fromTags
 }
 
+function trackTagList(track, namespace) {
+  return track.tags?.[namespace] || []
+}
+
+function FilterRow({ title, items, selected, onToggle }) {
+  if (!items || items.length === 0) {
+    return null
+  }
+  return (
+    <>
+      <p className="filter-label">{title}</p>
+      <div className="filter-row">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`filter-chip${selected.includes(item.id) ? ' is-on' : ''}`}
+            onClick={() => onToggle(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </>
+  )
+}
+
 function LibraryWorkspace({ backendOnline }) {
   const [tracks, setTracks] = useState([])
-  const [taxonomy, setTaxonomy] = useState({ mood: [], style: [] })
+  const [taxonomy, setTaxonomy] = useState({
+    mood: [],
+    style: [],
+    scene: [],
+    relationship: [],
+    drama_function: [],
+  })
   const [title, setTitle] = useState('')
   const [artist, setArtist] = useState('')
   const [files, setFiles] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const [moods, setMoods] = useState([])
   const [styles, setStyles] = useState([])
+  const [scenes, setScenes] = useState([])
+  const [relationships, setRelationships] = useState([])
+  const [functions, setFunctions] = useState([])
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [busy, setBusy] = useState(false)
@@ -55,8 +92,16 @@ function LibraryWorkspace({ backendOnline }) {
 
   const labels = useMemo(() => {
     const map = {}
-    for (const item of [...taxonomy.mood, ...taxonomy.style]) {
-      map[item.id] = item.label
+    for (const group of [
+      taxonomy.mood,
+      taxonomy.style,
+      taxonomy.scene,
+      taxonomy.relationship,
+      taxonomy.drama_function,
+    ]) {
+      for (const item of group || []) {
+        map[item.id] = item.label
+      }
     }
     return map
   }, [taxonomy])
@@ -216,7 +261,15 @@ function LibraryWorkspace({ backendOnline }) {
   const visible = tracks.filter((track) => {
     const moodOk = moods.length === 0 || moods.some((item) => trackMoods(track).includes(item))
     const styleOk = styles.length === 0 || styles.some((item) => trackStyles(track).includes(item))
-    return moodOk && styleOk
+    const sceneOk =
+      scenes.length === 0 || scenes.some((item) => trackTagList(track, 'scene').includes(item))
+    const relOk =
+      relationships.length === 0 ||
+      relationships.some((item) => trackTagList(track, 'relationship').includes(item))
+    const fnOk =
+      functions.length === 0 ||
+      functions.some((item) => trackTagList(track, 'drama_function').includes(item))
+    return moodOk && styleOk && sceneOk && relOk && fnOk
   })
   const selected = tracks.find((track) => track.id === selectedId)
 
@@ -300,6 +353,11 @@ function LibraryWorkspace({ backendOnline }) {
       </aside>
 
       <section className="report-stage">
+        <SceneSearch
+          backendOnline={backendOnline}
+          labels={labels}
+          onPlay={setSelectedId}
+        />
         {selected?.audio_path && (
           <div className="player-panel">
             <p className="kicker">PLAYER</p>
@@ -310,34 +368,52 @@ function LibraryWorkspace({ backendOnline }) {
 
         <div className="filter-panel">
           <p className="kicker">SEARCH BY TAGS</p>
-          <p className="filter-label">情绪 Mood</p>
-          <div className="filter-row">
-            {taxonomy.mood.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={`filter-chip${moods.includes(item.id) ? ' is-on' : ''}`}
-                onClick={() => setMoods((current) => toggleValue(current, item.id))}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <p className="filter-label">风格 Style</p>
-          <div className="filter-row">
-            {taxonomy.style.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={`filter-chip${styles.includes(item.id) ? ' is-on' : ''}`}
-                onClick={() => setStyles((current) => toggleValue(current, item.id))}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          {(moods.length > 0 || styles.length > 0) && (
-            <button type="button" className="text-button tag-button" onClick={() => { setMoods([]); setStyles([]) }}>
+          <FilterRow
+            title="情绪 Mood"
+            items={taxonomy.mood}
+            selected={moods}
+            onToggle={(id) => setMoods((current) => toggleValue(current, id))}
+          />
+          <FilterRow
+            title="场景 Scene"
+            items={taxonomy.scene}
+            selected={scenes}
+            onToggle={(id) => setScenes((current) => toggleValue(current, id))}
+          />
+          <FilterRow
+            title="关系 Relationship"
+            items={taxonomy.relationship}
+            selected={relationships}
+            onToggle={(id) => setRelationships((current) => toggleValue(current, id))}
+          />
+          <FilterRow
+            title="剧情功能 Drama"
+            items={taxonomy.drama_function}
+            selected={functions}
+            onToggle={(id) => setFunctions((current) => toggleValue(current, id))}
+          />
+          <FilterRow
+            title="风格 Style"
+            items={taxonomy.style}
+            selected={styles}
+            onToggle={(id) => setStyles((current) => toggleValue(current, id))}
+          />
+          {(moods.length > 0 ||
+            styles.length > 0 ||
+            scenes.length > 0 ||
+            relationships.length > 0 ||
+            functions.length > 0) && (
+            <button
+              type="button"
+              className="text-button tag-button"
+              onClick={() => {
+                setMoods([])
+                setStyles([])
+                setScenes([])
+                setRelationships([])
+                setFunctions([])
+              }}
+            >
               Clear filters
             </button>
           )}
@@ -377,6 +453,11 @@ function LibraryWorkspace({ backendOnline }) {
                     ))}
                     {trackMoods(track).map((tag) => (
                       <span className="tag-chip" key={`mood-${tag}`}>
+                        {labelFor(tag)}
+                      </span>
+                    ))}
+                    {trackTagList(track, 'scene').map((tag) => (
+                      <span className="tag-chip" key={`scene-${tag}`}>
                         {labelFor(tag)}
                       </span>
                     ))}
